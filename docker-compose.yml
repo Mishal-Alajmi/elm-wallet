@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  wallet:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: 'elm-wallet'
+    ports:
+      - '8080:8080'
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://wallet-db:5432/wallet
+      - SPRING_DATASOURCE_USERNAME=wallet-srv
+      - SPRING_DATASOURCE_PASSWORD=test
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    depends_on:
+      - wallet-db
+
+  wallet-db:
+    image: postgres:13.15-bullseye
+    environment:
+      POSTGRES_DB: wallet
+      POSTGRES_USER: wallet-srv
+      POSTGRES_PASSWORD: test
+    ports:
+      - '5432:5432'
+    volumes:
+      - wallet_volume:/var/lib/postgres/data
+
+volumes:
+  wallet_volume:

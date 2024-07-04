@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: elm-wallet
+    port: 8080
+  datasource:
+    url: jdbc:postgresql://localhost:5432/wallet
+    username: wallet-srv
+    password: test
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
