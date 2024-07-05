@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.9'
 
 services:
   wallet:
@@ -9,23 +9,23 @@ services:
     ports:
       - '8080:8080'
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://wallet-db:5432/wallet
-      - SPRING_DATASOURCE_USERNAME=wallet-srv
-      - SPRING_DATASOURCE_PASSWORD=test
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/elm
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
     depends_on:
-      - wallet-db
+      - db
 
-  wallet-db:
+  db:
     image: postgres:13.15-bullseye
     environment:
-      POSTGRES_DB: wallet
-      POSTGRES_USER: wallet-srv
-      POSTGRES_PASSWORD: test
+      POSTGRES_DB: elm
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
     ports:
       - '5432:5432'
     volumes:
-      - wallet_volume:/var/lib/postgres/data
+      - elm_volume:/var/lib/postgres/data
 
 volumes:
-  wallet_volume:
+  elm_volume:
