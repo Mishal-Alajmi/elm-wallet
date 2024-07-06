@@ -2,9 +2,17 @@ package com.malajmi.elm_wallet.wallet;
 
 import com.malajmi.elm_wallet.exceptions.InvalidParametersException;
 import com.malajmi.elm_wallet.exceptions.NotFoundException;
+import com.malajmi.elm_wallet.transaction.TransactionEntity;
+import com.malajmi.elm_wallet.transaction.TransactionService;
+import com.malajmi.elm_wallet.transaction.enums.TransactionStatus;
+import com.malajmi.elm_wallet.transaction.enums.TransactionType;
+import com.malajmi.elm_wallet.transaction.models.TransactionsQueryParams;
+import com.malajmi.elm_wallet.transaction.models.TransactionsResponse;
 import com.malajmi.elm_wallet.wallet.models.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -15,8 +23,9 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class WalletService {
-    
+
     private final WalletRepository walletRepository;
+    private final TransactionService transactionService;
 
     public WalletEntity createWallet() {
         return WalletEntity.builder()
@@ -36,14 +45,21 @@ public class WalletService {
                 .findByUserId(request.userId())
                 .orElseThrow(() -> new NotFoundException("Could not find wallet"));
 
+        var transaction = TransactionService
+                .createTransaction(wallet, request.amount(), TransactionType.ADD_FUNDS);
+
         wallet.setBalance(wallet.getBalance().add(request.amount()));
+        wallet.addTransaction(transaction);
 
         boolean status = true;
         try {
             walletRepository.save(wallet);
+            transaction.setStatus(TransactionStatus.SUCCESS);
         } catch (Exception e) {
             status = false;
+            transaction.setStatus(TransactionStatus.FAILURE);
         }
+        transactionService.updateTransaction(transaction);
 
         return toAddFundsResponse(wallet, status);
     }
@@ -61,16 +77,23 @@ public class WalletService {
             throw new InvalidParametersException("Sender does not have enough balance");
         }
 
+        var transaction = TransactionService
+                .createTransaction(sender, request.amount(), TransactionType.TRANSFER);
+
         sender.setBalance(sender.getBalance().subtract(request.amount()));
+        sender.addTransaction(transaction);
         recipient.setBalance(recipient.getBalance().add(request.amount()));
 
         boolean status = true;
         try {
             walletRepository.saveAll(List.of(sender, recipient));
+            transaction.setStatus(TransactionStatus.SUCCESS);
         } catch (Exception e) {
             status = false;
+            transaction.setStatus(TransactionStatus.FAILURE);
         }
 
+        transactionService.updateTransaction(transaction);
         return toTransferResponse(request.amount(), status);
     }
 
@@ -84,16 +107,25 @@ public class WalletService {
             throw new InvalidParametersException("Sender does not have enough balance");
         }
 
+        var transaction = TransactionService
+                .createTransaction(wallet, request.amount(), TransactionType.WITHDRAW);
+        wallet.addTransaction(transaction);
         wallet.setBalance(wallet.getBalance().subtract(request.amount()));
 
         boolean status = true;
         try {
             walletRepository.save(wallet);
+            transaction.setStatus(TransactionStatus.SUCCESS);
         } catch (Exception e) {
             status = false;
+            transaction.setStatus(TransactionStatus.FAILURE);
         }
-
+        transactionService.updateTransaction(transaction);
         return toBankTransferResponse(request.amount(), status);
+    }
+
+    public Page<TransactionsResponse> getTransactions(TransactionsQueryParams params, Pageable pageable) {
+        return transactionService.getTransactions(params, pageable);
     }
 
     public static BankTransferResponse toBankTransferResponse(BigDecimal amount, boolean status) {
@@ -127,5 +159,4 @@ public class WalletService {
                 .createdAt(wallet.getCreatedAt())
                 .build();
     }
-
 }
