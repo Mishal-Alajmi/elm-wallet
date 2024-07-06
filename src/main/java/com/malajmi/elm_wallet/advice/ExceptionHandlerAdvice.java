@@ -1,6 +1,7 @@
 package com.malajmi.elm_wallet.advice;
 
 import com.malajmi.elm_wallet.exceptions.DuplicateUserException;
+import com.malajmi.elm_wallet.exceptions.InvalidParametersException;
 import com.malajmi.elm_wallet.exceptions.NotFoundException;
 import com.malajmi.elm_wallet.exceptions.UserNotFoundException;
 import com.malajmi.elm_wallet.model.ApiErrorResponse;
@@ -47,6 +48,11 @@ public class ExceptionHandlerAdvice {
         @ExceptionHandler(DuplicateUserException.class)
         public ResponseEntity<ApiErrorResponse> handleDuplicateException(DuplicateUserException e) {
             return ResponseEntity.status(CONFLICT).body(new ApiErrorResponse(CONFLICT.value(), e.getMessage()));
+        }
+
+        @ExceptionHandler(InvalidParametersException.class)
+        public ResponseEntity<ApiErrorResponse> handleInvalidParametersException(InvalidParametersException e) {
+            return ResponseEntity.status(BAD_REQUEST).body(new ApiErrorResponse(BAD_REQUEST.value(), e.getMessage()));
         }
 
         @ExceptionHandler(UserNotFoundException.class)

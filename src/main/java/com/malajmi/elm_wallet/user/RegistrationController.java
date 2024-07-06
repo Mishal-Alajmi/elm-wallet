@@ -6,18 +6,17 @@ import com.malajmi.elm_wallet.user.models.SignupRequest;
 import com.malajmi.elm_wallet.user.models.WalletUserResponse;
 import com.malajmi.elm_wallet.utils.JwtHelper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Controller;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 
-@Controller
+@RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class RegistrationController {
@@ -25,15 +24,17 @@ public class RegistrationController {
     private final AuthenticationManager authenticationManager;
 
     @PostMapping("/signup")
-    public ResponseEntity<WalletUserResponse> signup(@Valid @RequestBody SignupRequest request) {
-        var user = userService.createUser(request);
-        return ResponseEntity.ok(user);
+    public WalletUserResponse signup(@Valid @RequestBody SignupRequest request) {
+        return userService.createUser(request);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+    public LoginResponse login(@Valid @RequestBody LoginRequest request) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.username(), request.password()));
         var token = JwtHelper.generateToken(request.username());
-        return ResponseEntity.ok(new LoginResponse(request.username(), token));
+        return LoginResponse.builder()
+                .username(request.username())
+                .token(token)
+                .build();
     }
 }

@@ -1,5 +1,6 @@
 package com.malajmi.elm_wallet.user;
 
+import com.malajmi.elm_wallet.wallet.WalletEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -35,12 +36,17 @@ public class WalletUserEntity implements UserDetails {
     private String email;
     @Column(name = "role", nullable = false)
     private String role;
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private WalletEntity wallet;
     @CreationTimestamp(source = SourceType.DB)
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
     @UpdateTimestamp(source = SourceType.DB)
     @Column(name = "updated_at")
     private Instant updatedAt;
+
+    @OneToOne(mappedBy = "user", orphanRemoval = true)
+    private WalletEntity walletEntity;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
